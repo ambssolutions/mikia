@@ -60,3 +60,28 @@ text), NZBN and company number (content.js `nzbn`, `companyNumber`), social link
 Logo in vector format (SVG or AI) and colour codes, brand fonts (the site uses Fraunces, IBM Plex Sans and
 IBM Plex Mono), domain registrar details and any existing hosting, Google Analytics and Business Profile
 access, and the existing website URL if this is a rebuild.
+
+## Version 2 (client feedback, Website design specs V1.0)
+
+Everything is on one Our services page (no sub-pages). Services built with the client's copy: Three Waters, Earthwork / Retaining Wall / Erosion Sediment Control, Flood and Overland Flow Path, Tank Mitigation Design, Parking / Driveway / Manoeuvring, Stormwater Design (Version 2, with rain garden and wetland), On-site Wastewater Treatment Design.
+
+Services with short DRAFT copy written by us from the service names (replace each with the client's final text; check the technical wording, especially 223, Faulty Title, PC79, COA and EPA):
+- Civil: Detailed Feasibility Study, Public Road, Coastal Inundation
+- Planning: Complimentary Online Meeting, Development Feasibility Report, Subdivision Assessment, Land Use Consent Assessment, Boundary Adjustment, Special Character Zone
+- Survey: Topo, 223, Faulty Title, Boundary Adjustment
+- Traffic: Traffic Report, PC79
+- Project Management: Complete Subdivision Design (RC, BC, EPA), Construction Management, Stakeholder Consultation Management, Contract Management, Tender Design Management, Engineer's Representation Service
+- Construction, COA (Certificate of Acceptance) and Neighbour's Consent (whole sections, also draft)
+- About: Knowledge sharing
+
+Other content still needed:
+- Our Team: names, roles, bios and photos (assets/content.js, `team`).
+- Client testimonials (assets/content.js, `testimonials`).
+- Real project details and images (assets/projects.js).
+- The service copy says "MIKIA Design and Construction Group"; the rest of the site says "MiKia Consulting Group". Confirm which name to use.
+- Enquiry form emails info@mikia.co.nz for now; a shared Google Sheet / form service can replace it later (FORM_ENDPOINT in assets/form.js).
+
+## Open questions for the client
+- Our team: Neelam Gandhi was removed from the site copy and the team card; send the people to show (names, roles, photos).
+- Blog: the page exists and is empty (posts go in assets/blog.js); it is not linked from the footer. Keep the About page "Visit the blog" link?
+- QR code: not received yet; recommended placement is the Contact page only, pointing to the new site's contact page.
