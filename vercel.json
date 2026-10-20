@@ -1,4 +1,11 @@
 {
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "v2-client-feedback": true,
+      "**": false
+    }
+  },
   "cleanUrls": true,
   "redirects": [
     {
