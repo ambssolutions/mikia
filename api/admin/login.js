@@ -28,6 +28,7 @@ module.exports = async function (req, res) {
   const users = await U.readUsers();
   const u = users.find((x) => x.email === email);
   if (!u || !u.hash || !U.checkPassword(pw, u.hash)) return bad();
+  if (u.disabled) return L.send(res, 403, { error: 'This login has been switched off. Ask the person who looks after the website.' });
   delete fails[key];
   u.lastLogin = new Date().toISOString();
   try { await U.writeUsers(users); } catch (e) { /* signing in still works */ }

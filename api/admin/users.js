@@ -7,7 +7,7 @@ const crypto = require('crypto');
 const INVITE_DAYS = 7;
 const hashToken = (t) => L.sign('invite:' + t);
 module.exports = async function (req, res) {
-  const me = L.currentUser(req);
+  const me = await U.live(L.currentUser(req));
   /* A person opening their invitation link sets their own password. No sign-in needed; the link itself is the proof. */
   if (req.method === 'POST' && !me) {
     let b0; try { b0 = await L.readJson(req, 4000); } catch (e) { return L.send(res, 413, { error: 'Request too large.' }); }
@@ -17,7 +17,7 @@ module.exports = async function (req, res) {
     const pr = U.passwordProblem(b0.password); if (pr) return L.send(res, 400, { error: pr });
     const users = await U.readUsers();
     const u = users.find((x) => x.email === email);
-    if (!u || !u.invite || !token || !L.safeEq(hashToken(token), u.invite.h) || Date.parse(u.invite.exp) < Date.now()) {
+    if (!u || u.disabled || !u.invite || !token || !L.safeEq(hashToken(token), u.invite.h) || Date.parse(u.invite.exp) < Date.now()) {
       await new Promise((r) => setTimeout(r, 700));
       return L.send(res, 400, { error: 'This invitation link has expired or is not valid. Ask for a new one.' });
     }
@@ -49,7 +49,7 @@ module.exports = async function (req, res) {
   /* A MiKia admin (manager) can invite, reset and remove editors only. Everything else stays with AMBS. */
   const target = (email) => users.find((x) => x.email === email);
   const editorOnly = (email) => { const t = target(email); return !t || L.ROLE(t.role) === 'editor'; };
-  if (mgr && !['invite', 'reset', 'list', 'remove'].includes(action)) return L.send(res, 403, { error: 'Only AMBS can do that.' });
+  if (mgr && !['invite', 'reset', 'list', 'remove', 'disable'].includes(action)) return L.send(res, 403, { error: 'Only AMBS can do that.' });
   if (mgr && action !== 'list' && action !== 'invite' && !editorOnly(U.cleanEmail(b.email))) return L.send(res, 403, { error: 'Only AMBS can change that person.' });
   const view = () => users.filter((x) => !mgr || L.ROLE(x.role) === 'editor' || x.email === me.email).map(U.publicUser);
   /* Optionally emails the private link to the person. If the mailbox is not connected yet, the link is still returned so it can be copied. */
@@ -90,6 +90,15 @@ module.exports = async function (req, res) {
     u.invite = { h: hashToken(token), exp: new Date(Date.now() + INVITE_DAYS * 864e5).toISOString() };
     await U.writeUsers(users);
     return L.send(res, 200, await inviteReply(email, L.origin(req) + '/admin?invite=' + token + '&email=' + encodeURIComponent(email)));
+  }
+  if (action === 'disable') {
+    const email = U.cleanEmail(b.email), u = target(email), off = !!b.off;
+    if (!u) return L.send(res, 404, { error: 'That person was not found.' });
+    if (email === me.email) return L.send(res, 400, { error: 'You cannot switch off your own access.' });
+    if (off && u.role === 'owner' && users.filter((x) => x.role === 'owner' && !x.disabled).length <= 1) return L.send(res, 400, { error: 'There must be at least one owner with access.' });
+    if (off) u.disabled = true; else delete u.disabled;
+    await U.writeUsers(users);
+    return L.send(res, 200, { users: view() });
   }
   if (action === 'list') return L.send(res, 200, { users: view() });
   if (action === 'save') {
