@@ -1,5 +1,6 @@
 const L = require('../_lib');
 const U = require('../_users');
+const S = require('../_settings');
 /* Sign in. With an email and password: a person added in the Users tab.
    With only the shared master password (no email): AMBS's way in, always available, and the way to add the first people. */
 let fails = {};
@@ -19,8 +20,9 @@ module.exports = async function (req, res) {
   };
   if (!pw) return bad();
   if (!email) {
-    const master = process.env.ADMIN_PASSWORD;
-    if (!master || !L.safeEq(pw, master)) return bad();
+    await S.load();
+    const mh = S.masterHash(), master = process.env.ADMIN_PASSWORD;
+    if (mh ? !U.checkPassword(pw, mh) : (!master || !L.safeEq(pw, master))) return bad();
     delete fails[key];
     res.setHeader('Set-Cookie', L.sessionCookieFor({ email: 'master', name: 'AMBS master login', role: 'owner' }));
     return L.send(res, 200, { ok: true, user: { email: 'master', name: 'AMBS master login', role: 'owner' } });
