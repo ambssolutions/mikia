@@ -16,7 +16,7 @@
 <link rel="preload" href="assets/fonts/ibm-plex-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/ibm-plex-mono-normal-400-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/css-admin.css?v=ce7c6f02">
-<link rel="stylesheet" href="assets/admin-app.css?v=6369dcf9">
+<link rel="stylesheet" href="assets/admin-app.css?v=e1868d15">
 
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.mikia.co.nz/"}, {"@type": "ListItem", "position": 2, "name": "Admin", "item": "https://www.mikia.co.nz/admin"}]}</script>
 </head>
@@ -43,7 +43,7 @@
 <div class="ad-card"><h2>Add a photo</h2><form id="adUpForm"><label for="adFile">Photo (JPEG, PNG or WebP)</label><p class="ad-help ad-std">Standard size: 1600 &times; 1000 pixels (landscape), JPEG or WebP. Smaller than 1200 pixels wide can look blurry. Larger pictures are shrunk automatically.</p><input id="adFile" name="photo" type="file" accept="image/jpeg,image/png,image/webp" required><label for="adCaption">Address</label><input id="adCaption" name="caption" type="text" maxlength="120" placeholder="e.g. 12 Example Road, Albany"><label for="adDesc">Brief description</label><input id="adDesc" name="desc" type="text" maxlength="200" placeholder="e.g. Four new townhouses on a corner site"><button class="ad-go" type="submit">Add photo</button></form></div>
 <div class="ad-card"><div class="ad-top"><h2>Photos in the carousel <small id="adCount"></small></h2></div><ul class="ad-list" id="adList"></ul></div>
 </div></div>
-<div data-pane="feedback" hidden><div class="ad-card"><div class="ad-top"><h2>Client feedback <small id="adFbCount"></small></h2></div><p class="ad-help">New feedback arrives here and by email. Approve it to show it in the Testimonials section.</p><ul class="ad-list" id="adFb"></ul></div></div>
+<div data-pane="feedback" hidden><div class="ad-card"><div class="ad-top"><h2>Client feedback <small id="adFbCount"></small></h2></div><p class="ad-help">New feedback arrives here and by email. Approve it to show it in the Testimonials section.</p><div class="ad-btns"><button type="button" id="adFbPrev">Preview the Testimonials section on the website</button></div><ul class="ad-list" id="adFb"></ul></div></div>
 <div data-pane="pages" hidden>
 <div class="ad-card" id="edPick"><h2>Which page do you want to edit?</h2><p class="ad-help">Choose a page. You will then choose how to edit it. Nothing goes on the website until you press Publish.</p><div id="edPageGrid" class="ep-grid"></div><div class="ad-btns"><button type="button" id="edNew2">+ New page</button></div></div>
 <div class="ad-card" id="edTop" hidden><h2>Edit a page</h2><div class="ad-pagebar"><select id="edPage" aria-label="Page to edit"></select><button type="button" id="edNew">New page</button><button type="button" id="edPickBack2">Choose another page</button><button type="button" id="edDel" class="ad-rm">Delete page</button></div>
@@ -70,6 +70,6 @@
 </main>
 </div>
 </div>
-<script src="assets/admin.js?v=6369dcf9" defer></script>
+<script src="assets/admin.js?v=e1868d15" defer></script>
 </body>
 </html>
