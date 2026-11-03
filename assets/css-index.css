@@ -9,4 +9,4 @@
 .mt-col.has-tq #tmEmpty{display:none}
 .mt-col .tq-stage{min-width:0;width:100%}
 .mt-col .tq-stage .tq{min-width:0;width:100%;max-width:100%;padding:18px 20px}
-.mt-cta .btn{background:#c03434;color:#fff;border-color:transparent;font-size:16px;padding-inline:26px;min-height:46px}
+.mt-cta .btn{font-size:16px;padding-inline:26px;min-height:46px}
