@@ -9,6 +9,16 @@
   "cleanUrls": true,
   "redirects": [
     {
+      "source": "/blog",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/links",
+      "destination": "/",
+      "permanent": false
+    },
+    {
       "source": "/residential",
       "destination": "/projects#residential",
       "permanent": false

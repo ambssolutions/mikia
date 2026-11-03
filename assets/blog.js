@@ -1,1 +1,0 @@
-window.MIKIA_BLOG=[];
