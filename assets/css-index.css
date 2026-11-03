@@ -4,8 +4,8 @@
 /* testimonials: the quote card is the same size as the photo, the arrows sit at the bottom like the photo arrows, and the Share button sits under both cards */
 .mt-col.has-tq .tq-list{flex:1;display:flex;flex-direction:column;justify-content:space-between;gap:12px}
 .mt-col .tq-stage .tq{aspect-ratio:16/10;box-sizing:border-box;padding:22px 26px;border-radius:18px}
-.mt-grid~#tmEmpty{flex:none;min-height:0;width:auto;max-width:none;border:0;padding:0;margin:clamp(20px,2.6vw,32px) auto 0;flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px 18px;max-width:1080px}
-.mt-grid~#tmEmpty .mt-box{display:none}
-.mt-grid~#tmEmpty .tq-ask{margin:0;color:var(--muted,#525252);font-size:16px}
+.mt-cta{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px 18px;max-width:1080px;margin:clamp(20px,2.6vw,32px) auto 0}
+.mt-cta .tq-ask{margin:0;color:var(--muted,#525252);font-size:16px}
+.mt-col.has-tq #tmEmpty{display:none}
 .mt-col .tq-stage{min-width:0;width:100%}
 .mt-col .tq-stage .tq{min-width:0;width:100%;max-width:100%;padding:18px 20px}
