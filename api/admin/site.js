@@ -30,7 +30,7 @@ function mirror(x, f) {
 }
 const pageUrlToPath = (u) => String(u).replace(/^\//, '').replace(/#.*$/, '') || 'index';
 
-const EDIT_JS = "document.addEventListener('click',function(e){var a=e.target.closest('a');if(a)e.preventDefault();},true);document.querySelectorAll('[data-ek]').forEach(function(s){s.contentEditable='true';s.spellcheck=true;s.addEventListener('keydown',function(e){if(e.key==='Enter')e.preventDefault();e.stopPropagation();});s.addEventListener('keyup',function(e){e.stopPropagation();});s.addEventListener('input',function(){parent.postMessage({mk:'edit',k:Number(s.getAttribute('data-ek')),v:s.textContent},'*');});});";
+const EDIT_JS = "document.addEventListener('click',function(e){var a=e.target.closest('a');if(a)e.preventDefault();},true);document.querySelectorAll('[data-ek]').forEach(function(s){s.contentEditable='true';s.spellcheck=true;s.addEventListener('keydown',function(e){if(e.key==='Enter')e.preventDefault();e.stopPropagation();});s.addEventListener('keyup',function(e){e.stopPropagation();});s.addEventListener('input',function(){parent.postMessage({mk:'edit',k:Number(s.getAttribute('data-ek')),v:s.textContent},'*');});});document.querySelectorAll('img[data-ek-img]').forEach(function(im){var k=Number(im.getAttribute('data-ek-img'));im.title='Click to change this picture';im.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();var f=document.createElement('input');f.type='file';f.accept='image/jpeg,image/png,image/webp';f.onchange=function(){var file=f.files&&f.files[0];if(!file)return;var r=new FileReader();r.onload=function(){im.removeAttribute('srcset');im.removeAttribute('sizes');im.src=r.result;parent.postMessage({mk:'pic',k:k,name:file.name,type:file.type,data:r.result},'*');};r.readAsDataURL(file);};f.click();},true);});";
 module.exports = async function (req, res) {
   await S.load();
   const me = await U.live(L.currentUser(req));
@@ -39,7 +39,7 @@ module.exports = async function (req, res) {
   let b; try { b = await L.readJson(req, 5.5e6); } catch (e) { return L.send(res, 413, { error: 'That was too large to send.' }); }
   const action = String(b.action || '');
   /* Which section of the editor each action belongs to. Publishing and discarding are for anyone who can change pages or contact details. */
-  const SECTION = { pages: 'pages', page: 'pages', edit: 'pages', op: 'pages', add: 'pages', image: 'pages', preview: 'pages', newpage: 'pages', deletepage: 'pages', menu: 'pages', menuop: 'pages', details: 'details', savedetails: 'details', history: 'changes', undo: 'changes' };
+  const SECTION = { pages: 'pages', page: 'pages', edit: 'pages', op: 'pages', add: 'pages', image: 'pages', preview: 'pages', newpage: 'pages', deletepage: 'pages', menu: 'pages', menuop: 'pages', details: 'details', savedetails: 'details', history: 'changes', undo: 'changes', changedetail: 'changes' };
   if (action !== 'status' && !(action === 'publish' || action === 'discard' ? U.can(me, 'pages') || U.can(me, 'details') : U.can(me, SECTION[action] || 'pages'))) return L.send(res, 403, { error: 'You do not have access to this section.' });
   if (!G.ready()) return L.send(res, action === 'status' ? 200 : 503, action === 'status' ? { ready: false } : { error: 'The website editor is not connected yet. It needs the GitHub access key to be added in Vercel.' });
   try {
@@ -116,8 +116,14 @@ module.exports = async function (req, res) {
       const origin = L.origin(req);
       if (b.edit) { // on-page editing: every piece of page text can be clicked and typed over
         const x = P.extract(html);
-        for (const f of x.fields.filter((q) => q.kind === 'text' && q.region === 'main' && !/^(option|textarea|button)$/.test(q.tag)).reverse()) html = html.slice(0, f.start) + '<span data-ek="' + f.k + '">' + html.slice(f.start, f.end) + '</span>' + html.slice(f.end);
-        html = html.replace(/<\/body>/i, '<style>[data-ek]{outline-offset:2px}[data-ek]:hover{outline:2px dashed #c8323c;cursor:text}[data-ek]:focus{outline:2px solid #c8323c;background:rgba(200,50,60,.06)}</style><script>' + EDIT_JS + '</script></body>');
+        const ins = [];
+        for (const f of x.fields) {
+          if (f.region !== 'main') continue;
+          if (f.kind === 'text' && !/^(option|textarea|button)$/.test(f.tag)) { ins.push({ at: f.start, t: '<span data-ek="' + f.k + '">' }); ins.push({ at: f.end, t: '</span>' }); }
+          else if (f.picture && f.tagStart != null) ins.push({ at: f.tagStart + 4, t: ' data-ek-img="' + f.k + '"' });
+        }
+        ins.sort((a, b) => b.at - a.at); for (const i of ins) html = html.slice(0, i.at) + i.t + html.slice(i.at);
+        html = html.replace(/<\/body>/i, '<style>[data-ek]{outline-offset:2px}[data-ek]:hover{outline:2px dashed #c8323c;cursor:text}[data-ek]:focus{outline:2px solid #c8323c;background:rgba(200,50,60,.06)}img[data-ek-img]{cursor:pointer}img[data-ek-img]:hover{outline:3px solid #c8323c;outline-offset:-3px;filter:brightness(.92)}</style><script>' + EDIT_JS + '</script></body>');
       }
       html = html.replace(/<head>/i, '<head><base href="' + origin + '/">');
       if (w.draft) { // pictures that only exist in the draft are placed inside the preview
@@ -132,6 +138,33 @@ module.exports = async function (req, res) {
       let drafts = [];
       if (w.draft) { const dh = await G.history(G.DRAFT, b.path ? okPath(b.path) : '', 30); const set = new Set(live.map((c) => c.sha)); drafts = dh.filter((c) => !set.has(c.sha)); }
       return L.send(res, 200, { draft: drafts, live });
+    }
+    if (action === 'changedetail') {
+      const d = await G.commitDiff(String(b.sha || '').replace(/[^0-9a-f]/g, ''));
+      const NICE = { email: 'Email', phone: 'Phone (for tapping)', phoneDisplay: 'Phone (as shown)', address1: 'Auckland address, first line', address2: 'Auckland address, second line', linkedin: 'LinkedIn', facebook: 'Facebook', instagram: 'Instagram', nzbn: 'NZBN', companyNumber: 'Company number' };
+      const lines = [], htmlDiffs = []; let pages = 0;
+      for (const f of d.files) {
+        if (f.path === 'assets/content.js' && f.text) {
+          try {
+            const rd = (src) => { const sb = { window: {} }; vm.runInNewContext(src || 'window.MIKIA={}', sb, { timeout: 500 }); const m = sb.window.MIKIA || {}; return Object.assign({}, m.contact || {}, m.social || {}, { nzbn: m.nzbn || '', companyNumber: m.companyNumber || '' }); };
+            const o = rd(f.before), n = rd(f.after);
+            for (const k of Object.keys(NICE)) if ((o[k] || '') !== (n[k] || '')) lines.push({ file: 'Contact details', type: 'changed', what: NICE[k], from: o[k] || '', to: n[k] || '' });
+          } catch (e) { lines.push({ file: 'Contact details', type: 'note', what: 'Contact details changed' }); }
+        } else if (/\.html$/.test(f.path) && f.text) {
+          pages++;
+          if (f.status === 'added') { lines.push({ file: f.path, type: 'note', what: 'New page added' }); continue; }
+          if (f.status === 'removed') { lines.push({ file: f.path, type: 'note', what: 'Page deleted' }); continue; }
+          htmlDiffs.push({ path: f.path, before: f.before, after: f.after });
+        } else if (/\.(webp|jpe?g|png|svg)$/i.test(f.path)) lines.push({ file: f.path, type: 'note', what: f.status === 'added' ? 'Picture added' : f.status === 'removed' ? 'Picture removed' : 'Picture replaced' });
+        else if (!/content\.js$|llms\.txt$/.test(f.path)) lines.push({ file: f.path, type: 'note', what: 'File changed' });
+      }
+      if (htmlDiffs.length > 3) { // the same menu, footer or contact change on every page: show it once
+        for (const x of P.diffPages(htmlDiffs[0].before, htmlDiffs[0].after).slice(0, 40)) lines.push(Object.assign({ file: 'On all ' + htmlDiffs.length + ' pages' }, x));
+      } else for (const hd of htmlDiffs) for (const x of P.diffPages(hd.before, hd.after).slice(0, 40)) lines.push(Object.assign({ file: hd.path }, x));
+      const known = new Set(); for (const l of lines) if (l.file === 'Contact details') { if (l.from) known.add(l.from); if (l.to) known.add(l.to); }
+      const strip = (v) => String(v || '').replace(/^(mailto:|tel:)/, '');
+      const shown = lines.filter((l) => l.file === 'Contact details' || !(known.has(strip(l.from)) || known.has(strip(l.to))));
+      return L.send(res, 200, { message: d.message, lines: shown });
     }
     if (action === 'undo') {
       const r = await G.revertFiles(String(b.sha || ''));
@@ -169,6 +202,9 @@ module.exports = async function (req, res) {
       const src = await read('assets/content.js'), sb = { window: {} }; vm.runInNewContext(src, sb, { timeout: 500 });
       const m = sb.window.MIKIA || {}, c = m.contact || {}, s = m.social || {};
       const cur = { email: c.email || '', phone: c.phone || '', phoneDisplay: c.phoneDisplay || '', address1: c.address1 || '', address2: c.address2 || '', linkedin: s.linkedin || '', facebook: s.facebook || '', instagram: s.instagram || '', nzbn: m.nzbn || '', companyNumber: m.companyNumber || '' };
+      /* The Christchurch office is written on the pages themselves rather than in the shared data, so it is read from the footer. */
+      const chc = /data-office="chc"[^>]*>(?:(?!<\/a>)[\s\S])*?<b>Christchurch office<\/b><br>([^<]*)<br>([^<]*)</.exec(await read('index.html'));
+      cur.chcAddress1 = chc ? chc[1].replace(/&amp;/g, '&').trim() : ''; cur.chcAddress2 = chc ? chc[2].replace(/&amp;/g, '&').trim() : '';
       if (action === 'details') return L.send(res, 200, { details: cur });
       const n = {}; for (const k of Object.keys(cur)) n[k] = L.FB_CLEAN(b.details && b.details[k] != null ? b.details[k] : cur[k], 160);
       if (n.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(n.email)) return L.send(res, 400, { error: 'That email address does not look right.' });
@@ -181,6 +217,13 @@ module.exports = async function (req, res) {
       const q = (a1, a2) => (a1 + ' ' + a2).replace(/^[^,]*,\s*/, '').replace(/ /g, '+');
       if (cur.address1 !== n.address1 || cur.address2 !== n.address2) add(q(cur.address1, cur.address2), q(n.address1, n.address2));
       add(cur.address1, n.address1); add(cur.address2, n.address2);
+      const chcQ = (a1, a2) => (a1 + ' ' + a2).replace(/^[^,]*,\s*/, '').replace(/,/g, '').trim().replace(/\s+/g, '+');
+      if (cur.chcAddress1 && n.chcAddress1 && (cur.chcAddress1 !== n.chcAddress1 || cur.chcAddress2 !== n.chcAddress2)) {
+        const E = P.esc, EA = P.escAttr, cq = (a1, a2) => chcQ(a1, a2).split('+').map(encodeURIComponent).join('+');
+        add(E(cur.chcAddress1) + '<br>' + E(cur.chcAddress2), E(n.chcAddress1) + '<br>' + E(n.chcAddress2));
+        add(E(cur.chcAddress1) + ', ' + E(cur.chcAddress2), EA(n.chcAddress1) + ', ' + EA(n.chcAddress2));
+        add(chcQ(cur.chcAddress1, cur.chcAddress2), cq(n.chcAddress1, n.chcAddress2));
+      }
       add(cur.linkedin, n.linkedin); add(cur.facebook, n.facebook); add(cur.instagram, n.instagram);
       const files = [{ path: 'assets/content.js', content: 'window.MIKIA=' + JSON.stringify(m) + ';\n' }];
       for (const f of (await G.listFiles(w.branch)).filter((q2) => q2.type === 'file' && (PAGE.test(q2.name) || q2.name === 'llms.txt'))) {

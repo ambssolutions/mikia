@@ -7,6 +7,7 @@ const S = require('../_settings');
 const crypto = require('crypto');
 const INVITE_DAYS = 7;
 const hashToken = (t) => L.sign('invite:' + t);
+const forgotTries = {};
 /* Asks GitHub about the saved key. GitHub reports a fine-grained key's expiry date in a response header. Cached for a few minutes. */
 let keyCache = { t: 0, sig: '', v: null };
 async function keyStatus(force) {
@@ -43,6 +44,30 @@ module.exports = async function (req, res) {
   if (req.method === 'POST' && !me) {
     let b0; try { b0 = await L.readJson(req, 4000); } catch (e) { return L.send(res, 413, { error: 'Request too large.' }); }
     if (b0.action === 'back') return stepBack(req, res);
+    if (b0.action === 'forgot') {
+      /* "Forgot password": emails a private link (good for an hour) to a person who has a login. The answer is the same whether or not the address is known. */
+      await S.load();
+      const em = U.cleanEmail(b0.email);
+      if (!U.EMAIL.test(em)) return L.send(res, 400, { error: 'Please type the email address you sign in with.' });
+      if (!L.storageReady()) return L.send(res, 503, { error: 'Storage is not connected yet.' });
+      if (!M.configured()) return L.send(res, 200, { ok: true, sent: false, note: 'Email is not connected yet. Ask the person who looks after the website to send you a new link.' });
+      const rk = String(req.headers['x-forwarded-for'] || '') + '|' + em, rr = forgotTries[rk] || { n: 0, t: 0 };
+      if (rr.n >= 3 && Date.now() - rr.t < 15 * 60000) return L.send(res, 429, { error: 'Too many requests. Please wait 15 minutes and try again.' });
+      forgotTries[rk] = { n: (Date.now() - rr.t < 15 * 60000 ? rr.n : 0) + 1, t: Date.now() };
+      const us = await U.readUsers(), fu = us.find((x) => x.email === em);
+      if (fu && fu.hash && !fu.disabled) {
+        const tok = crypto.randomBytes(24).toString('base64url');
+        fu.invite = { h: hashToken(tok), exp: new Date(Date.now() + 3600e3).toISOString() };
+        await U.writeUsers(us);
+        const link = L.origin(req) + '/admin?invite=' + tok + '&email=' + encodeURIComponent(em);
+        try {
+          await M.send({ to: em, subject: 'Reset your MiKia website editor password',
+            text: 'Hi' + (fu.name ? ' ' + fu.name : '') + ',\n\nSomeone asked to reset the password for this login. If it was you, open this private link to choose a new password:\n' + link + '\n\nThe link works once and expires in 1 hour. If it was not you, ignore this email and nothing changes.\n\nMiKia Design and Construction',
+            html: '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px"><p>Hi' + (fu.name ? ' ' + L.esc(fu.name) : '') + ',</p><p>Someone asked to reset the password for this login. If it was you, choose a new password here:</p><p><a href="' + L.esc(link) + '" style="display:inline-block;background:#c8323c;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none">Choose a new password</a></p><p>The link works once and expires in 1 hour. If it was not you, ignore this email and nothing changes.</p><p>MiKia Design and Construction</p></div>' });
+        } catch (e) { /* the reply stays the same */ }
+      }
+      return L.send(res, 200, { ok: true, sent: true, note: 'If that email has a login, a reset link is on its way. It works for 1 hour.' });
+    }
     if (b0.action !== 'accept') return L.send(res, 401, { error: 'Please log in.' });
     if (!L.storageReady()) return L.send(res, 503, { error: 'Storage is not connected yet.' });
     const email = U.cleanEmail(b0.email), token = String(b0.token || '');
@@ -68,7 +93,7 @@ module.exports = async function (req, res) {
   if (action === 'back') return stepBack(req, res);
   const target = (email) => users.find((x) => x.email === email);
   if (/^(settings|savesettings|testgithub|testmail)$/.test(action)) {
-    if (me.role !== 'owner') return L.send(res, 403, { error: 'Only AMBS can change connections.' });
+    if (!me.super) return L.send(res, 403, { error: 'Only the super admin can see or change connections.' });
     if (action === 'settings') return L.send(res, 200, { settings: S.summary(), key: await keyStatus(!!b.fresh) });
     if (action === 'savesettings') {
       const patch = {}; for (const k of Object.keys(S.KEYS)) if (Object.prototype.hasOwnProperty.call(b.values || {}, k)) patch[k] = b.values[k];
@@ -86,7 +111,7 @@ module.exports = async function (req, res) {
       return L.send(res, 200, { ok: !!k.ok, note: k.note + (k.ok && k.days != null ? ' It expires in ' + k.days + (k.days === 1 ? ' day.' : ' days.') : ''), key: k });
     }
     if (action === 'testmail') {
-      const to = U.cleanEmail(b.to) || (me.email !== 'master' ? me.email : '');
+      const to = U.cleanEmail(b.to) || (me.email !== 'master' ? me.email : (process.env.SMTP_USER || 'hello@ambs.co.nz'));
       if (!M.configured()) return L.send(res, 200, { ok: false, note: 'No email password has been saved yet.' });
       if (!U.EMAIL.test(to)) return L.send(res, 200, { ok: false, note: 'Type the email address to send the test to.' });
       try { await M.send({ to, subject: 'MiKia website: test email', text: 'This is a test from the MiKia website admin. Email is connected.' }); return L.send(res, 200, { ok: true, note: 'Test email sent to ' + to + '.' }); }
@@ -111,6 +136,16 @@ module.exports = async function (req, res) {
     u.hash = U.hashPassword(b.next);
     await U.writeUsers(users);
     return L.send(res, 200, { ok: true });
+  }
+  if (action === 'super') {
+    if (!me.super) return L.send(res, 403, { error: 'Only the super admin can do that.' });
+    const t = target(U.cleanEmail(b.email));
+    if (!t) return L.send(res, 404, { error: 'That person was not found.' });
+    if (L.ROLE(t.role) !== 'owner') return L.send(res, 400, { error: 'Only an owner (AMBS) can be a super admin.' });
+    if (b.on && (t.disabled || !t.hash)) return L.send(res, 400, { error: 'They need a working login first.' });
+    if (b.on) t.super = true; else delete t.super;
+    await U.writeUsers(users);
+    return L.send(res, 200, { users: users.map(U.publicUser) });
   }
   if (action === 'viewas') {
     if (me.role !== 'owner' || L.readBack(req)) return L.send(res, 403, { error: 'Only AMBS can do that.' });
@@ -143,14 +178,16 @@ module.exports = async function (req, res) {
     return out;
   };
   if (action === 'invite') {
-    const email = U.cleanEmail(b.email), name = L.FB_CLEAN(b.name, 80), role = mgr ? 'editor' : L.ROLE(b.role);
+    const email = U.cleanEmail(b.email), name = L.FB_CLEAN(b.name, 80), wantSuper = !mgr && b.role === 'super', role = mgr ? 'editor' : wantSuper ? 'owner' : L.ROLE(b.role);
     if (!U.EMAIL.test(email)) return L.send(res, 400, { error: 'Please enter a valid email address.' });
     let u = users.find((x) => x.email === email);
+    if (!mgr && !me.super && (role === 'owner' || (u && L.ROLE(u.role) === 'owner'))) return L.send(res, 403, { error: 'Only a super admin can add or change owners and super admins.' });
     if (u && u.hash && !u.invite) return L.send(res, 400, { error: 'That person already has a login. Use "Reset password" to give them a new link.' });
     if (u && mgr && L.ROLE(u.role) !== 'editor') return L.send(res, 403, { error: 'Only AMBS can change that person.' });
     if (u && u.role === 'owner' && role !== 'owner' && owners() <= 1) return L.send(res, 400, { error: 'There must be at least one owner.' });
     if (!u) { u = { email, created: new Date().toISOString() }; users.push(u); }
     u.name = name || u.name || ''; u.role = role;
+    if (wantSuper) u.super = true; else delete u.super;
     if (role === 'editor') u.access = U.cleanAccess(b.access); else delete u.access;
     const token = crypto.randomBytes(24).toString('base64url');
     u.invite = { h: hashToken(token), exp: new Date(Date.now() + INVITE_DAYS * 864e5).toISOString() };
@@ -185,15 +222,18 @@ module.exports = async function (req, res) {
   }
   if (action === 'list') return L.send(res, 200, { users: view() });
   if (action === 'save') {
-    const email = U.cleanEmail(b.email), name = L.FB_CLEAN(b.name, 80), role = mgr ? 'editor' : L.ROLE(b.role);
+    const email = U.cleanEmail(b.email), name = L.FB_CLEAN(b.name, 80), wantSuper = !mgr && b.role === 'super', role = mgr ? 'editor' : wantSuper ? 'owner' : L.ROLE(b.role);
     if (!U.EMAIL.test(email)) return L.send(res, 400, { error: 'Please enter a valid email address.' });
     let u = users.find((x) => x.email === email);
     if (u && mgr && L.ROLE(u.role) !== 'editor') return L.send(res, 403, { error: 'Only AMBS can change that person.' });
+    if (!mgr && !me.super && (role === 'owner' || (u && L.ROLE(u.role) === 'owner'))) return L.send(res, 403, { error: 'Only a super admin can add or change owners and super admins.' });
+    if (u && email === me.email && !wantSuper && u.super) return L.send(res, 400, { error: 'You cannot take super admin rights from yourself. Ask another super admin.' });
     if (u && u.role === 'owner' && role !== 'owner' && owners() <= 1) return L.send(res, 400, { error: 'There must be at least one owner.' });
     if (!u && !b.password) return L.send(res, 400, { error: 'Please set a password for the new person.' });
     if (b.password) { const pr = U.passwordProblem(b.password); if (pr) return L.send(res, 400, { error: pr }); }
     if (!u) { u = { email, created: new Date().toISOString() }; users.push(u); }
     u.name = name || u.name || ''; u.role = role;
+    if (wantSuper) u.super = true; else delete u.super;
     if (b.password) u.hash = U.hashPassword(b.password);
     await U.writeUsers(users);
     return L.send(res, 200, { users: view() });
