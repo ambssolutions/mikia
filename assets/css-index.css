@@ -27,3 +27,12 @@ html body footer .foot-social.foot-social a:hover{transform:translateY(-2px);bor
 html body footer .foot-social.foot-social a:active{transform:translateY(1px);box-shadow:inset 0 2px 5px rgba(0,0,0,.65),inset 0 -1px 0 rgba(255,255,255,.08)!important}
 html body footer .foot-social.foot-social a svg{box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -2px 2px rgba(0,0,0,.3),0 1px 3px rgba(0,0,0,.55)!important}
 @media(prefers-reduced-motion:reduce){html body footer .foot-social.foot-social a{transition:none}html body footer .foot-social.foot-social a:hover{transform:none}}
+/* Facebook: the official round logo (blue circle, white f) */
+html body footer .foot-social.foot-social a[aria-label$="Facebook"] svg{background:#fff!important;border-radius:50%!important;padding:0!important;color:#1877f2!important;width:22px!important;height:22px!important}
+@media(max-width:480px){html body footer .foot-social.foot-social a[aria-label$="Facebook"] svg{padding:0!important;width:20px!important;height:20px!important}}
+/* Facebook logo: drawn in its own two colours, so no background or padding is needed */
+html body footer .foot-social.foot-social a[aria-label$="Facebook"] svg{background:transparent!important;padding:0!important;border-radius:50%!important;width:22px!important;height:22px!important}
+@media(max-width:480px){html body footer .foot-social.foot-social a[aria-label$="Facebook"] svg{width:20px!important;height:20px!important}}
+/* Social logos: each drawn in its own colours (official shapes), larger and sharp */
+html body footer .foot-social.foot-social a svg,html body footer .foot-social.foot-social a[aria-label] svg{background:transparent!important;padding:0!important;border-radius:0!important;box-shadow:none!important;width:26px!important;height:26px!important;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.55))}
+@media(max-width:480px){html body footer .foot-social.foot-social a svg,html body footer .foot-social.foot-social a[aria-label] svg{width:23px!important;height:23px!important}html body footer .foot-social.foot-social a{padding:7px 9px!important}}
