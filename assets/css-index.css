@@ -10,3 +10,20 @@
 .mt-col .tq-stage{min-width:0;width:100%}
 .mt-col .tq-stage .tq{min-width:0;width:100%;max-width:100%;padding:18px 20px}
 .mt-cta .btn{font-size:16px;padding-inline:26px;min-height:46px}
+
+.foot-social a:nth-child(3) svg{background:#c03434}
+
+/* Social buttons: LinkedIn, Facebook and Instagram sit on one line */
+html body footer .foot-social.foot-social{display:flex!important;flex-wrap:nowrap!important;gap:10px!important;grid-template-columns:none!important}
+html body footer .foot-social.foot-social a{width:auto!important;flex:0 0 auto;justify-self:auto!important;white-space:nowrap}
+@media(max-width:480px){html body footer .foot-social.foot-social{gap:6px!important}html body footer .foot-social.foot-social a{padding:8px 10px!important;gap:6px!important;font-size:13px!important}html body footer .foot-social.foot-social a svg{width:20px!important;height:20px!important;padding:3px!important}}
+/* Social icons in each network's own colours */
+html body footer .foot-social.foot-social a[aria-label$="LinkedIn"] svg{background:#0a66c2!important}
+html body footer .foot-social.foot-social a[aria-label$="Facebook"] svg{background:#1877f2!important}
+html body footer .foot-social.foot-social a[aria-label$="Instagram"] svg{background:linear-gradient(45deg,#f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%)!important}
+/* Social buttons: embossed (raised) look */
+html body footer .foot-social.foot-social a{background:linear-gradient(180deg,#303030 0%,#1d1d1d 100%)!important;border:1px solid rgba(255,255,255,.14)!important;color:#f2f2f2!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -2px 3px rgba(0,0,0,.45),0 1px 0 rgba(255,255,255,.06),0 3px 6px rgba(0,0,0,.55),0 8px 16px rgba(0,0,0,.3)!important;text-shadow:0 -1px 0 rgba(0,0,0,.6);transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+html body footer .foot-social.foot-social a:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.3)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -2px 3px rgba(0,0,0,.45),0 6px 10px rgba(0,0,0,.6),0 12px 22px rgba(0,0,0,.35)!important}
+html body footer .foot-social.foot-social a:active{transform:translateY(1px);box-shadow:inset 0 2px 5px rgba(0,0,0,.65),inset 0 -1px 0 rgba(255,255,255,.08)!important}
+html body footer .foot-social.foot-social a svg{box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -2px 2px rgba(0,0,0,.3),0 1px 3px rgba(0,0,0,.55)!important}
+@media(prefers-reduced-motion:reduce){html body footer .foot-social.foot-social a{transition:none}html body footer .foot-social.foot-social a:hover{transform:none}}
