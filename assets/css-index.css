@@ -17,3 +17,7 @@
 html body footer .foot-social.foot-social{display:flex!important;flex-wrap:nowrap!important;gap:10px!important;grid-template-columns:none!important}
 html body footer .foot-social.foot-social a{width:auto!important;flex:0 0 auto;justify-self:auto!important;white-space:nowrap}
 @media(max-width:480px){html body footer .foot-social.foot-social{gap:6px!important}html body footer .foot-social.foot-social a{padding:8px 10px!important;gap:6px!important;font-size:13px!important}html body footer .foot-social.foot-social a svg{width:20px!important;height:20px!important;padding:3px!important}}
+/* Social icons in each network's own colours */
+html body footer .foot-social.foot-social a[aria-label$="LinkedIn"] svg{background:#0a66c2!important}
+html body footer .foot-social.foot-social a[aria-label$="Facebook"] svg{background:#1877f2!important}
+html body footer .foot-social.foot-social a[aria-label$="Instagram"] svg{background:linear-gradient(45deg,#f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%)!important}
