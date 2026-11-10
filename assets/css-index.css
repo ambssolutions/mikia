@@ -10,3 +10,5 @@
 .mt-col .tq-stage{min-width:0;width:100%}
 .mt-col .tq-stage .tq{min-width:0;width:100%;max-width:100%;padding:18px 20px}
 .mt-cta .btn{font-size:16px;padding-inline:26px;min-height:46px}
+
+.foot-social a:nth-child(3) svg{background:#c03434}
