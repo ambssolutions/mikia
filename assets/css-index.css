@@ -12,3 +12,8 @@
 .mt-cta .btn{font-size:16px;padding-inline:26px;min-height:46px}
 
 .foot-social a:nth-child(3) svg{background:#c03434}
+
+/* Social buttons: LinkedIn, Facebook and Instagram sit on one line */
+html body footer .foot-social.foot-social{display:flex!important;flex-wrap:nowrap!important;gap:10px!important;grid-template-columns:none!important}
+html body footer .foot-social.foot-social a{width:auto!important;flex:0 0 auto;justify-self:auto!important;white-space:nowrap}
+@media(max-width:480px){html body footer .foot-social.foot-social{gap:6px!important}html body footer .foot-social.foot-social a{padding:8px 10px!important;gap:6px!important;font-size:13px!important}html body footer .foot-social.foot-social a svg{width:20px!important;height:20px!important;padding:3px!important}}
