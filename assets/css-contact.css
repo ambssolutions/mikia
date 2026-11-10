@@ -19,3 +19,6 @@ html body footer .foot-social.foot-social a svg{box-shadow:inset 0 1px 0 rgba(25
 /* Facebook: the official round logo (blue circle, white f) */
 html body footer .foot-social.foot-social a[aria-label$="Facebook"] svg{background:#fff!important;border-radius:50%!important;padding:0!important;color:#1877f2!important;width:22px!important;height:22px!important}
 @media(max-width:480px){html body footer .foot-social.foot-social a[aria-label$="Facebook"] svg{padding:0!important;width:20px!important;height:20px!important}}
+/* Facebook logo: drawn in its own two colours, so no background or padding is needed */
+html body footer .foot-social.foot-social a[aria-label$="Facebook"] svg{background:transparent!important;padding:0!important;border-radius:50%!important;width:22px!important;height:22px!important}
+@media(max-width:480px){html body footer .foot-social.foot-social a[aria-label$="Facebook"] svg{width:20px!important;height:20px!important}}
