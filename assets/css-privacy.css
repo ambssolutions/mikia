@@ -23,3 +23,6 @@ html body footer .foot-social.foot-social a[aria-label$="Facebook"] svg{backgrou
 /* Facebook logo: drawn in its own two colours, so no background or padding is needed */
 html body footer .foot-social.foot-social a[aria-label$="Facebook"] svg{background:transparent!important;padding:0!important;border-radius:50%!important;width:22px!important;height:22px!important}
 @media(max-width:480px){html body footer .foot-social.foot-social a[aria-label$="Facebook"] svg{width:20px!important;height:20px!important}}
+/* Social logos: each drawn in its own colours (official shapes), larger and sharp */
+html body footer .foot-social.foot-social a svg,html body footer .foot-social.foot-social a[aria-label] svg{background:transparent!important;padding:0!important;border-radius:0!important;box-shadow:none!important;width:26px!important;height:26px!important;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.55))}
+@media(max-width:480px){html body footer .foot-social.foot-social a svg,html body footer .foot-social.foot-social a[aria-label] svg{width:23px!important;height:23px!important}html body footer .foot-social.foot-social a{padding:7px 9px!important}}
