@@ -45,10 +45,14 @@ module.exports = async function (req, res) {
   let b; try { b = await L.readJson(req, 5.5e6); } catch (e) { return L.send(res, 413, { error: 'That was too large to send.' }); }
   const action = String(b.action || '');
   /* Which section of the editor each action belongs to. Publishing and discarding are for anyone who can change pages or contact details. */
-  const SECTION = { pages: 'pages', page: 'pages', edit: 'pages', op: 'pages', add: 'pages', image: 'pages', preview: 'pages', newpage: 'pages', deletepage: 'pages', menu: 'pages', menuop: 'pages', details: 'details', savedetails: 'details', history: 'changes', publishes: 'changes', undo: 'changes', changedetail: 'changes' };
+  const SECTION = { pages: 'pages', page: 'pages', edit: 'pages', op: 'pages', add: 'pages', image: 'pages', preview: 'pages', newpage: 'pages', deletepage: 'pages', menu: 'pages', menuop: 'pages', details: 'details', savedetails: 'details', history: 'changes', publishes: 'changes', activity: 'changes', undo: 'changes', changedetail: 'changes' };
   /* Editors see, and can undo, only the changes they made themselves. */
   const isEd = me.role === 'editor', mine = (m) => String(m || '').endsWith('(' + who(me) + ')');
   if (action !== 'status' && !(action === 'publish' || action === 'discard' || action === 'undolast' ? U.can(me, 'pages') || U.can(me, 'details') : U.can(me, SECTION[action] || 'pages'))) return L.send(res, 403, { error: 'You do not have access to this section.' });
+  if (action === 'activity') {
+    const all = await L.readActivity();
+    return L.send(res, 200, { items: all.filter((x) => !isEd || x.by === me.email).slice(0, 100) });
+  }
   if (!G.ready()) return L.send(res, action === 'status' ? 200 : 503, action === 'status' ? { ready: false } : { error: 'The website editor is not connected yet. It needs the GitHub access key to be added in Vercel.' });
   try {
     if (action === 'status') {
@@ -222,7 +226,7 @@ module.exports = async function (req, res) {
       if (stack.length === 1) await G.discard(); /* nothing left that differs from the website */
       return L.send(res, 200, { ok: true });
     }
-    if (action === 'discard') { await G.discard(); return L.send(res, 200, { ok: true }); }
+    if (action === 'discard') { await G.discard(); await L.logActivity(me, { area: 'Website', kind: 'discard', title: 'Unpublished changes', text: 'Discarded all the changes that were waiting to be published' }); return L.send(res, 200, { ok: true }); }
     if (action === 'newpage' && !NEW_PAGES) return L.send(res, 403, { error: 'Creating new pages is switched off for now.' });
     if (action === 'newpage') {
       const slug = String(b.slug || '').toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40), from = okPath(b.from || 'privacy.html');
