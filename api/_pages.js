@@ -100,6 +100,7 @@ function extract(html) {
     for (const c of n.childNodes || []) {
       if (c.nodeName === '#text') {
         if (!c.value.trim() || !c.sourceCodeLocation) continue;
+        if (inTrack) continue; /* the heading and line under each Media photo are edited through the photo boxes, kept by place */
         fields.push({ kind: 'text', region: reg, item, tag: n.tagName || '', label: '', value: c.value, start: c.sourceCodeLocation.startOffset, end: c.sourceCodeLocation.endOffset });
         if (reg === 'main') {
           let b = n; while (b && !(b.tagName && BLOCKS.has(b.tagName))) b = b.parentNode;
@@ -115,7 +116,7 @@ function extract(html) {
 function publicView(html) {
   const x = extract(html);
   return {
-    fields: x.fields.map((f) => ({ k: f.k, kind: f.kind, attr: f.attr || '', region: f.region, item: f.item == null ? -1 : f.item, tag: f.tag, label: f.label, value: f.value, src: f.src || '', picture: !!f.picture })),
+    fields: x.fields.map((f) => ({ k: f.k, kind: f.kind, attr: f.attr || '', region: f.region, item: f.item == null ? -1 : f.item, sec: f.region === 'main' ? x.sections.findIndex((z) => f.start >= z.start && f.start < z.end) : -1, tag: f.tag, label: f.label, value: f.value, src: f.src || '', picture: !!f.picture })),
     items: x.items.map((i, idx) => ({ i: idx, tag: i.tag, n: i.n, pos: i.pos, region: i.region, label: i.label, group: i.group })),
     sections: x.sections.map((s) => ({ i: s.i, label: s.label, n: s.n })),
     blocks: x.blocks.map((b, i) => ({ b: i, tag: b.tag, label: b.label.slice(0, 60) })).filter((b) => b.label)
@@ -279,6 +280,19 @@ function setCaptions(html, caps, photos) {
   return html.slice(0, m.innerStart) + parts.join('') + html.slice(m.innerEnd);
 }
 
+/* For the editing window (which cannot load the photo list itself): show a slide for every photo in the Media box, each keeping the text kept for its place. */
+function renderPhotos(html, photos, edit) {
+  const m = mediaSlides(html); if (!m || !photos || !photos.length) return html;
+  const parts = photos.map((ph, i) => {
+    const s = m.slides[i];
+    let cap = s && s.capStart != null ? html.slice(s.capStart, s.capEnd) : '';
+    /* In the editing window every photo gets a heading and a line box (holding its words, or empty), saved by the editor itself. */
+    if (edit) cap = '<figcaption><b data-cap="t" data-i="' + i + '" data-ph="Add a heading">' + esc(s ? s.t : '') + '</b><span data-cap="d" data-i="' + i + '" data-ph="Add a line about this photo">' + esc(s ? s.d : '') + '</span></figcaption>';
+    return '<figure class="mcar-s' + (i === 0 ? ' on' : '') + '"><img src="' + escAttr(ph.src || '') + '" alt="' + escAttr(ph.alt || '') + '" width="1600" height="1000" decoding="async">' + cap + '</figure>';
+  });
+  return html.slice(0, m.innerStart) + parts.join('') + html.slice(m.innerEnd);
+}
+
 function diffPages(before, after) {
   const what = (f) => (f.region === 'head' ? 'Google and sharing text' : f.kind === 'text' ? 'Wording' : f.attr === 'alt' ? 'Picture description' : f.attr === 'src' ? 'Picture' : f.attr === 'href' ? 'Link' : 'Text');
   /* Where on the page a field sits: the menu, the footer, Google text, or the section it is in (named by its heading). */
@@ -320,6 +334,19 @@ function diffPages(before, after) {
     for (const [d, a] of pairs) { if (a) out.push({ type: 'changed', what: a.what, where: a.where, sec: a.sec, under: a.under, el: a.el, from: d.val, to: a.val }); else out.push({ type: 'removed', what: d.what, where: d.where, sec: d.sec, under: d.under, el: d.el, from: d.val }); }
     adds.forEach((a, ix) => { if (!used.has(ix)) out.push({ type: 'added', what: a.what, where: a.where, sec: a.sec, under: a.under, el: a.el, to: a.val }); });
   }
+  /* The heading and line under each Media photo (kept by place). */
+  try {
+    const a = mediaSlides(before), b = mediaSlides(after);
+    if (a || b) {
+      const sa = a ? a.slides : [], sb = b ? b.slides : [], top = Math.max(sa.length, sb.length);
+      for (let q = 0; q < top; q++) for (const [f, el] of [['t', 'Heading'], ['d', 'Line']]) {
+        const x = ((sa[q] || {})[f] || '').replace(/\s+/g, ' ').trim(), y = ((sb[q] || {})[f] || '').replace(/\s+/g, ' ').trim();
+        if (x === y) continue;
+        const o = { what: 'Wording', where: 'Under photo ' + (q + 1) + ' in the Media box', sec: 'Media box', under: 'Photo ' + (q + 1), el };
+        out.push(x && y ? Object.assign({ type: 'changed', from: x, to: y }, o) : y ? Object.assign({ type: 'added', to: y }, o) : Object.assign({ type: 'removed', from: x }, o));
+      }
+    }
+  } catch (e) { /* the rest of the list is still shown */ }
   return out;
 }
-module.exports = { mediaSlides, setCaptions, diffPages, extract, publicView, applyChanges, applyOp, addContent, esc, escAttr };
+module.exports = { mediaSlides, setCaptions, renderPhotos, diffPages, extract, publicView, applyChanges, applyOp, addContent, esc, escAttr };
