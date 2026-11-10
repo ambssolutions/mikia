@@ -16,7 +16,7 @@
 <link rel="preload" href="assets/fonts/ibm-plex-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/ibm-plex-mono-normal-400-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/css-admin.css?v=ce7c6f02">
-<link rel="stylesheet" href="assets/admin-app.css?v=5eb17f1c">
+<link rel="stylesheet" href="assets/admin-app.css?v=98e887e4">
 
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.mikia.co.nz/"}, {"@type": "ListItem", "position": 2, "name": "Admin", "item": "https://www.mikia.co.nz/admin"}]}</script>
 </head>
@@ -40,7 +40,7 @@
 <div class="ad-card" id="pbCard"><h2>Pictures on each page</h2><p class="ad-help">Choose a page to see its pictures, then press Change picture on the one you want to replace. Standard size: 1600 &times; 1000 pixels (landscape), JPEG or WebP. Smaller than 1200 pixels wide can look blurry. Larger pictures are shrunk automatically.</p><div class="ad-pagebar"><select id="pbPage" aria-label="Page"></select></div><div id="pbGrid" class="pb-grid"></div></div>
 
 <div id="carouselWrap"><div class="ad-card" id="carHead"><h2>Home page carousel</h2><p class="ad-help">These photos rotate in the carousel on the home page. Upload them and put them in order here. This is kept separate from the pictures on the page itself, above.</p></div>
-<div class="ad-card"><h2>Add a photo</h2><form id="adUpForm"><label for="adFile">Photo (JPEG, PNG or WebP)</label><p class="ad-help ad-std">Standard size: 1600 &times; 1000 pixels (landscape), JPEG or WebP. Smaller than 1200 pixels wide can look blurry. Larger pictures are shrunk automatically.</p><input id="adFile" name="photo" type="file" accept="image/jpeg,image/png,image/webp" required><label for="adCaption">Address</label><input id="adCaption" name="caption" type="text" maxlength="120" placeholder="e.g. 12 Example Road, Albany"><label for="adDesc">Brief description</label><input id="adDesc" name="desc" type="text" maxlength="200" placeholder="e.g. Four new townhouses on a corner site"><button class="ad-go" type="submit">Add photo</button></form></div>
+<div class="ad-card"><h2>Add a photo</h2><form id="adUpForm"><label for="adFile">Photo (JPEG, PNG or WebP)</label><p class="ad-help ad-std">Standard size: 1600 &times; 1000 pixels (landscape), JPEG or WebP. Smaller than 1200 pixels wide can look blurry. Larger pictures are shrunk automatically.</p><input id="adFile" name="photo" type="file" accept="image/jpeg,image/png,image/webp" required><button class="ad-go" type="submit">Add photo</button></form></div>
 <div class="ad-card"><div class="ad-top"><h2>Photos in the carousel <small id="adCount"></small></h2></div><ul class="ad-list" id="adList"></ul></div>
 </div></div>
 <div data-pane="feedback" hidden><div class="ad-card"><div class="ad-top"><h2>Client feedback <small id="adFbCount"></small></h2></div><p class="ad-help">New feedback arrives here and by email. Approve it to show it in the Testimonials section.</p><div class="ad-btns"><button type="button" id="adFbPrev">Preview the Testimonials section on the website</button></div><ul class="ad-list" id="adFb"></ul></div></div>
@@ -70,6 +70,6 @@
 </main>
 </div>
 </div>
-<script src="assets/admin.js?v=5eb17f1c" defer></script>
+<script src="assets/admin.js?v=98e887e4" defer></script>
 </body>
 </html>
