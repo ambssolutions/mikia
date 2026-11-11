@@ -16,7 +16,7 @@
 <link rel="preload" href="assets/fonts/ibm-plex-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/ibm-plex-mono-normal-400-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/css-admin.css?v=ce7c6f02">
-<link rel="stylesheet" href="assets/admin-app.css?v=2765a03f">
+<link rel="stylesheet" href="assets/admin-app.css?v=5b9db461">
 
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.mikia.co.nz/"}, {"@type": "ListItem", "position": 2, "name": "Admin", "item": "https://www.mikia.co.nz/admin"}]}</script>
 </head>
@@ -39,7 +39,7 @@
 <div class="ad-card" id="fmtCard"><label class="ad-chk"><input type="checkbox" id="adWebp" checked> Save pictures I upload as WebP (smaller and faster; recommended)</label><p class="ad-help ad-std">WebP keeps the same look at about a third of the size, so the website loads faster. Turn this off to keep JPEG. This applies to every upload in the editor and is remembered on this computer.</p></div>
 <div class="ad-card" id="pbCard"><h2>Pictures on each page</h2><p class="ad-help">Every page is listed by its name. Open a page to see its pictures, then press Change picture on the one you want to replace. Standard size: 1600 &times; 1000 pixels (landscape), JPEG or WebP. Smaller than 1200 pixels wide can look blurry. Larger pictures are shrunk automatically.</p><div id="pbGrid" class="pb-pages"></div></div>
 
-<div id="carouselWrap"><div class="ad-card" id="carHead"><h2>Home page carousel</h2><p class="ad-help">These photos rotate in the carousel on the home page. Upload them and put them in order here. This is kept separate from the pictures on the page itself, above.</p></div>
+<div id="carouselWrap"><div class="ad-help pb-carnote" id="carHead">These photos rotate in the carousel at the top of the homepage. Adding, removing and reordering photos goes on the website straight away. The heading and line under each photo are saved to your draft until you press Publish.</div>
 <div class="ad-card"><h2>Add a photo</h2><form id="adUpForm"><label for="adFile">Photo (JPEG, PNG or WebP)</label><p class="ad-help ad-std">Standard size: 1600 &times; 1000 pixels (landscape), JPEG or WebP. Smaller than 1200 pixels wide can look blurry. Larger pictures are shrunk automatically.</p><input id="adFile" name="photo" type="file" accept="image/jpeg,image/png,image/webp" required><button class="ad-go" type="submit">Add photo</button></form></div>
 <div class="ad-card"><div class="ad-top"><h2>Photos in the carousel <small id="adCount"></small></h2></div><p class="ad-help" id="phCapHelp" hidden>Under each photo, add a heading and a line. They are saved to your draft and go on the website when you press Publish. They belong to the place in the carousel (1st, 2nd...), so if you reorder the photos, the words stay in their place.</p><p class="ad-help" id="phCapNote"></p><ul class="ad-list" id="adList"></ul></div>
 </div></div>
@@ -70,6 +70,6 @@
 </main>
 </div>
 </div>
-<script src="assets/admin.js?v=2765a03f" defer></script>
+<script src="assets/admin.js?v=5b9db461" defer></script>
 </body>
 </html>
