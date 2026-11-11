@@ -148,6 +148,9 @@ module.exports = async function (req, res) {
     }
     if (action === 'preview') {
       const path = okPath(b.path);
+      /* The page, the photos and the draft's list of new pictures are fetched together, not one after the other. */
+      const photosP = path === 'index.html' ? L.currentPhotos().catch(() => null) : null;
+      const aheadP = w.draft ? G.ahead().catch(() => null) : null;
       let html = await read(path);
       const origin = L.origin(req);
       if (b.edit) { // on-page editing: every piece of page text can be clicked and typed over
@@ -161,12 +164,12 @@ module.exports = async function (req, res) {
         ins.sort((a, b) => b.at - a.at); for (const i of ins) html = html.slice(0, i.at) + i.t + html.slice(i.at);
         html = html.replace(/<\/body>/i, '<style>nav.nav,.nav-links,.menu-btn,.qbar,footer{display:none!important}[data-ek]{outline-offset:2px}[data-ek]:hover{outline:2px dashed #c8323c;cursor:text}[data-ek]:focus{outline:2px solid #c8323c;background:rgba(200,50,60,.06)}img[data-ek-img]{cursor:pointer}img[data-ek-img]:hover{outline:3px solid #c8323c;outline-offset:-3px;filter:brightness(.92)}</style><script>' + EDIT_JS + '</script></body>');
       }
-      if (path === 'index.html') { try { html = P.renderPhotos(html, (await L.currentPhotos()).map(L.publicPhoto), !!b.edit); } catch (e) { /* keep the page as it is */ } }
+      if (photosP) { try { const ph = await photosP; if (ph) html = P.renderPhotos(html, ph.map(L.publicPhoto), !!b.edit); } catch (e) { /* keep the page as it is */ } }
       html = html.replace(/<head>/i, '<head><base href="' + origin + '/">');
       if (w.draft) { // pictures that only exist in the draft are placed inside the preview
-        const a = await G.ahead(); const mine = new Set((a && a.files) || []);
+        const a = await aheadP; const mine = new Set((a && a.files) || []);
         const srcs = [...html.matchAll(/(src|srcset)="(projects\/up-[^"\s,]+)/g)].map((m) => m[2]).filter((s) => mine.has(s));
-        for (const s of new Set(srcs)) { const f = await G.readFile(s, w.branch); const mt = /\.png$/.test(s) ? 'image/png' : /\.webp$/.test(s) ? 'image/webp' : 'image/jpeg'; html = html.split(s).join('data:' + mt + ';base64,' + f.buffer.toString('base64')); }
+        const uniq = [...new Set(srcs)]; const got = await Promise.all(uniq.map((s) => G.readFile(s, w.branch))); uniq.forEach((s, ix) => { const f = got[ix]; const mt = /\.png$/.test(s) ? 'image/png' : /\.webp$/.test(s) ? 'image/webp' : 'image/jpeg'; html = html.split(s).join('data:' + mt + ';base64,' + f.buffer.toString('base64')); });
       }
       return L.send(res, 200, { html });
     }
@@ -210,8 +213,14 @@ module.exports = async function (req, res) {
         } else if (/\.(webp|jpe?g|png|svg)$/i.test(f.path)) lines.push({ file: f.path, type: 'note', what: f.status === 'added' ? 'Picture added' : f.status === 'removed' ? 'Picture removed' : 'Picture replaced' });
         else if (!/content\.js$|llms\.txt$/.test(f.path)) lines.push({ file: f.path, type: 'note', what: 'File changed' });
       }
-      if (htmlDiffs.length > 3) { // the same menu, footer or contact change on every page: show it once
-        for (const x of P.diffPages(htmlDiffs[0].before, htmlDiffs[0].after).slice(0, 400)) lines.push(Object.assign({ file: 'On all ' + htmlDiffs.length + ' pages' }, x));
+      if (htmlDiffs.length > 3) {
+        /* The same menu, footer or contact change on every page is shown once; anything else that changed on a page is shown under that page. */
+        const per = htmlDiffs.map((hd) => P.diffPages(hd.before, hd.after).slice(0, 400));
+        const key = (x) => JSON.stringify([x.type, x.what, x.where, x.sec, x.under, x.el, x.from || '', x.to || '']);
+        const common = new Set(per[0].map(key).filter((k) => per.every((l) => l.some((x) => key(x) === k))));
+        const seen = new Set();
+        for (const x of per[0]) if (common.has(key(x)) && !seen.has(key(x))) { seen.add(key(x)); lines.push(Object.assign({ file: 'On all ' + htmlDiffs.length + ' pages' }, x)); }
+        htmlDiffs.forEach((hd, i) => { const gone = new Set(); for (const x of per[i]) { const k = key(x); if (common.has(k) && !gone.has(k)) { gone.add(k); continue; } lines.push(Object.assign({ file: hd.path }, x)); } });
       } else for (const hd of htmlDiffs) for (const x of P.diffPages(hd.before, hd.after).slice(0, 400)) lines.push(Object.assign({ file: hd.path }, x));
       const known = new Set(); for (const l of lines) if (l.file === 'Contact details') { if (l.from) known.add(l.from); if (l.to) known.add(l.to); }
       const strip = (v) => String(v || '').replace(/^(mailto:|tel:)/, '');
